@@ -1,3 +1,4 @@
+import pickle, copy
 from os import path, sep, makedirs
 from tkinter import Tk, Frame, Label, Button, PhotoImage, RIGHT, CENTER
 from tkinter.filedialog import askopenfilenames
@@ -6,10 +7,21 @@ import subprocess,time
 from datetime import date
 
 class REViewer():
-    
+            
     def getPath():
         return path.dirname(path.realpath(__file__))
-
+    def loadPrefs( p ):
+        print(p)
+        REViewer.preferences.last_path = p[0]
+        REViewer.preferences.colors = p[1]
+        print("When loading last_path was :" + REViewer.preferences.last_path)
+    def savePrefs( self ):
+        prefs = []
+        prefs.append( REViewer.preferences.last_path )
+        prefs.append( REViewer.preferences.colors )
+        print("When saving last_path was :" + prefs[0] )
+        pickle.dump( prefs , open( "pref.p" , "wb" ))
+        
     class info():
         title = "MAkinE REViewer"
         ver = 0.1
@@ -18,7 +30,7 @@ class REViewer():
         mkn_proj_root="/Volumes/pegasus/01_PROJECTS"
     
     class rsrc():
-        logo_filename = "makine.gif"   
+        logo_filename = "makine.gif"
     class strings():
         dbg_msg_1="Selecting..."
         dbg_msg_2="Compressing..."
@@ -28,9 +40,16 @@ class REViewer():
         stat_1="NO FILE SELECTED"
         stat_2="QUEUED FILES:"
         stat_3="PROCESSING FILES..."
+
     class preferences():
-        last_path="/Volumes/pegasus/01_PROJECTS/14002_ZUBFORD155_Ford_Ready_For_Me_January_Offers_F150_Focus/06_Graphics/07_Output/03_Offer_Cards/"
-    
+        last_path="/Volumes/pegasus/01_PROJECTS/"
+        class colors():
+            failure=""
+            success=""
+            normal="#555555"
+            active=""
+            done="#008800"        
+            
     def get_mkn_project_root( path ):
         
         project_root_path = path.split(sep)[4]
@@ -100,6 +119,10 @@ class REViewerGUI:
             initialdir=REViewer.preferences.last_path,
             title= REViewer.strings.msg_1
         )
+        
+        REViewer.preferences.last_path = path.dirname(path.realpath(self.files[-1]))
+        REViewer.savePrefs( self )
+        
         self.announce_status( REViewer.strings.stat_2 )
         
         for i , f in enumerate(self.files):
@@ -109,12 +132,14 @@ class REViewerGUI:
                     self.files_frame,
                     text=path.basename(str(f)),
                     justify=CENTER,
-                    fg="#555555"
+                    fg=REViewer.preferences.colors.normal
                 )
             )
             self.file_labels[i].pack()
+            REViewer.preferences.last_path = path.realpath(path.dirname(f))
         
         self.buttons[0].config(state="normal")
+        
     
     def compress_files( self ):
         print( REViewer.strings.dbg_msg_2 )
@@ -165,9 +190,9 @@ class REViewerGUI:
                 "-y",
                 dest
                 ])
-                self.file_labels[i].config(fg="#008800")
+                self.file_labels[i].config( fg=REViewer.preferences.colors.done )
                 if replace :
-                    self.file_labels[i].config(text=file_labels[i].cget("text") + " (Replaced)")
+                    self.file_labels[i].config(text=self.file_labels[i].cget("text") + " (Replaced)")
             else:
                 self.file_labels[i].config(text=file_labels[i].cget("text") + " (Skipped)")
             
@@ -177,7 +202,13 @@ class REViewerGUI:
         
         for b in self.buttons:
             b.config(state="normal")
+        
 
+if path.exists("pref.p"):
+    saved_prefs = pickle.load( open( "pref.p" , "rb") )
+    print(saved_prefs)
+    print("FUCK : " + str(saved_prefs[0]) )
+    REViewer.loadPrefs( saved_prefs )
 
 root = Tk()
 my_gui = REViewerGUI(root)
