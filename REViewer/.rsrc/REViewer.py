@@ -1,4 +1,4 @@
-from os import path, sep
+from os import path, sep, makedirs
 from tkinter import Tk, Frame, Label, Button, PhotoImage, RIGHT, CENTER
 from tkinter.filedialog import askopenfilenames
 from tkinter.messagebox import askyesno
@@ -9,25 +9,27 @@ class REViewer():
     
     def getPath():
         return path.dirname(path.realpath(__file__))
-        
+
     class info():
         title = "MAkinE REViewer"
         ver = 0.1
         stage = "beta"
-        description= """Select movies to generate REVIEW files."""
+        description="""Select movies to generate REVIEW files."""
+        mkn_proj_root="/Volumes/pegasus/01_PROJECTS"
     
     class rsrc():
         logo_filename = "makine.gif"   
     class strings():
+        dbg_msg_1="Selecting..."
+        dbg_msg_2="Compressing..."
         btn_exec='Compress Files'
         btn_select='Select Files'
-        status_label="NO FILE SELECTED"
-    
-    class data():
-        pass
-        #files = []
-
-    
+        msg_1="Select movie files."
+        stat_1="NO FILE SELECTED"
+        stat_2="QUEUED FILES:"
+        stat_3="PROCESSING FILES..."
+    class preferences():
+        last_path="/Volumes/pegasus/01_PROJECTS/14002_ZUBFORD155_Ford_Ready_For_Me_January_Offers_F150_Focus/06_Graphics/07_Output/03_Offer_Cards/"
     
     def get_mkn_project_root( path ):
         
@@ -58,7 +60,7 @@ class REViewerGUI:
             master,
             justify= RIGHT,
             padx =50,
-            text="NO FILE SELECTED"
+            text=REViewer.strings.stat_1
             )
 
         self.desc_label = Label(
@@ -88,24 +90,17 @@ class REViewerGUI:
         for i in self.buttons:
             i.pack(side="bottom")
         
-        # self.greet_button = Button(master, text="Greet", command=self.greet)
-        # self.greet_button.pack()
-
-        # self.close_button = Button(master, text="Close", command=master.quit)
-        # self.close_button.pack()
-        
     def announce_status( self, string ):
         self.status_label.config(text= string )
         self.master.update()
     
     def select_files(self):
-        print("Selecting...")
+        print( REViewer.strings.dbg_msg_1 )
         self.files = askopenfilenames(
-            #initialdir="/Volumes/pegasus/01_PROJECTS/",
-            initialdir="/Volumes/pegasus/01_PROJECTS/18036_ARCD001_Cruz_Diez_Documentary/07_DI/03_Footage_SLXs/02_ONL_Footage/051518/",
-            title="Select movie files."
+            initialdir=REViewer.preferences.last_path,
+            title= REViewer.strings.msg_1
         )
-        self.announce_status("QUEUED FILES:")
+        self.announce_status( REViewer.strings.stat_2 )
         
         for i , f in enumerate(self.files):
             
@@ -122,11 +117,12 @@ class REViewerGUI:
         self.buttons[0].config(state="normal")
     
     def compress_files( self ):
-        print("Compressing...")
+        print( REViewer.strings.dbg_msg_2 )
+        
         today = date.today()
         today_tag = today.strftime("%m%d%y")
 
-        self.announce_status("PROCESSING FILES...")
+        self.announce_status( REViewer.strings.stat_3 )
         
         root.update()
         
@@ -134,13 +130,17 @@ class REViewerGUI:
             b.config(state="disabled")
             
         
-        for i, f in enumerate(self.files):
-            new_path = "/Volumes/pegasus/01_PROJECTS/"+ REViewer.get_mkn_project_root(f)+sep+"10_Review"+sep+today_tag+sep
+        for i, f in enumerate( self.files ):
+            
+            new_path = REViewer.info.mkn_proj_root + sep + REViewer.get_mkn_project_root(f)+sep+"10_Review"+sep+today_tag+sep
+            
+            print(new_path)
             
             if not path.exists(new_path):
+                #print(new_path)
                 makedirs(new_path)
                 #chown(new_path,getpwnam("nobody"),getgrnam("editorial-graphics"))
-                chmod(new_path,0o0775)
+                #chmod(new_path,0o0775)
             
             new_filename = path.splitext(path.basename(f))[0]
             
